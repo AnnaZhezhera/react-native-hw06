@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useFonts } from "expo-font";
+import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   Dimensions,
@@ -13,33 +12,21 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from "react-native";
-import AddIcon from "./assets/images/add.svg";
-
-import * as SplashScreen from "expo-splash-screen";
 
 const initialState = {
-  login: "",
   email: "",
   password: "",
 };
 
-SplashScreen.preventAutoHideAsync();
-
-export default function App() {
-  const [fontsLoaded] = useFonts({
-    RobotoMedium: require("./assets/fonts/Roboto-Medium.ttf"),
-    RobotoRegular: require("./assets/fonts/Roboto-Regular.ttf"),
-    RobotoThin: require("./assets/fonts/Roboto-ThinItalic.ttf"),
-  });
+export default function Login({ navigation }) {
+  // console.log("navigation", navigation);
 
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
   const [state, setState] = useState(initialState);
 
-  const [borderLoginColor, setBorderLoginColor] = useState("#E8E8E8");
   const [borderEmailColor, setBorderEmailColor] = useState("#E8E8E8");
   const [borderPasswordColor, setBorderPasswordColor] = useState("#E8E8E8");
 
-  const [inputBgLoginColor, setInputBgLoginColor] = useState("#F6F6F6");
   const [inputBgEmailColor, setInputBgEmailColor] = useState("#F6F6F6");
   const [inputBgPasswordColor, setInputBgPasswordColor] = useState("#F6F6F6");
 
@@ -60,36 +47,20 @@ export default function App() {
     setState(initialState);
   };
 
-  //adding fonts
-
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-  if (!fontsLoaded) {
-    return null;
-  }
-  //   end
-
   return (
-    <ScrollView style={styles.container} onLayout={onLayoutRootView}>
+    <ScrollView style={styles.container}>
       <TouchableWithoutFeedback onPress={keyboardHide}>
         <ImageBackground
           style={styles.image}
-          source={require("./assets/images/Photo-BG.jpg")}
+          source={require("../../assets/images/Photo-BG.jpg")}
         >
           <View
             style={{
               ...styles.wrapp,
               width: "100%",
-              marginTop: isShowKeyboard ? 147 : 263,
+              marginTop: isShowKeyboard ? 273 : 323,
             }}
           >
-            <View style={styles.userImageThumb}>
-              <AddIcon style={styles.addBtn} width={25} height={25} />
-            </View>
-
             <View style={{ ...styles.form, width: dimensions.windowWidth }}>
               <Text
                 style={{
@@ -97,33 +68,8 @@ export default function App() {
                   fontFamily: "RobotoMedium",
                 }}
               >
-                Registration
+                Log in
               </Text>
-
-              <TextInput
-                value={state.login}
-                class="my-input"
-                style={{
-                  ...styles.input,
-                  marginBottom: 16,
-                  fontFamily: "RobotoRegular",
-                  borderColor: borderLoginColor,
-                  backgroundColor: inputBgLoginColor,
-                }}
-                placeholder="Login"
-                onFocus={() => {
-                  setIsShowKeyboard(true);
-                  setBorderLoginColor("#FF6C00");
-                  setInputBgLoginColor("#FFFFFF");
-                }}
-                onBlur={() => {
-                  setBorderLoginColor("#E8E8E8");
-                  setInputBgLoginColor("#F6F6F6");
-                }}
-                onChangeText={(value) =>
-                  setState((prevState) => ({ ...prevState, login: value }))
-                }
-              />
 
               <TextInput
                 value={state.email}
@@ -181,15 +127,18 @@ export default function App() {
                 <Text
                   style={{ ...styles.btnTitle, fontFamily: "RobotoRegular" }}
                 >
-                  Register
+                  Log in
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => navigation.navigate("Registration")}
+              >
                 <Text
                   style={{ ...styles.linkTitle, fontFamily: "RobotoRegular" }}
                 >
-                  Already have an account?
+                  Don`t have an account? Register
                 </Text>
               </TouchableOpacity>
             </View>
@@ -203,9 +152,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   image: {
     flex: 1,
     resizeMode: "cover",
@@ -215,23 +161,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
 
-    paddingTop: 92,
+    paddingTop: 32,
     borderWidth: 1,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     borderColor: "#FFFFFF",
     backgroundColor: "#FFFFFF",
-  },
-
-  userImageThumb: {
-    position: "absolute",
-    top: -60,
-    width: 120,
-    height: 120,
-    backgroundColor: "#F6F6F6",
-    borderColor: "#F6F6F6",
-    borderWidth: 1,
-    borderRadius: 16,
   },
 
   addBtn: {
@@ -271,6 +206,7 @@ const styles = StyleSheet.create({
   linkTitle: {
     fontSize: 16,
     textAlign: "center",
+    marginBottom: 132,
     lineHeight: 18.75,
     color: "#1B4371",
   },
