@@ -77,7 +77,6 @@ export const CreatePostScreen = ({ navigation }) => {
   };
 
   const onDelete = () => {
-    console.log("delete");
     setName("");
     setLocation(null);
     setPhoto(null);
@@ -199,7 +198,7 @@ export const CreatePostScreen = ({ navigation }) => {
                 <TouchableOpacity
                   style={styles.deleteWrapp}
                   activeOpacity={0.8}
-                  onPress={onDelete()}
+                  onPress={onDelete}
                 >
                   <DeleteIcon width={24} height={24} />
                 </TouchableOpacity>
