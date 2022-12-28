@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -82,8 +82,8 @@ const useRoute = (isAuth) => {
   );
 };
 
-export default function Apppp() {
-  const routing = useRoute(null);
+export default function App() {
+  const routing = useRoute(true);
 
   const [fontsLoaded] = useFonts({
     RobotoMedium: require("./assets/fonts/Roboto-Medium.ttf"),
