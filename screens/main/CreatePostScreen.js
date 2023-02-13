@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Camera, CameraType } from "expo-camera";
+import { storage } from "../../firebase/config";
 
 import {
   Keyboard,
@@ -14,18 +16,28 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 
+import { nanoid } from "nanoid";
+
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc } from "firebase/firestore";
+import { firestore } from "../../firebase/config";
+
 import ArrowLeftIcon from "../../assets/images/arrowLeft.svg";
 import CameraIcon from "../../assets/images/camera.svg";
 import MapPinIcon from "../../assets/images/mapPin.svg";
 import DeleteIcon from "../../assets/images/trashBin.svg";
 
 export const CreatePostScreen = ({ navigation }) => {
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState({});
+  const [coords, setCoords] = useState(null);
+  const [city, setCity] = useState("");
   const [name, setName] = useState("");
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
 
   const [snap, setSnap] = useState(null);
-  const [photo, setPhoto] = useState(false);
+  const [photo, setPhoto] = useState(null);
+
+  const { userId, login } = useSelector((state) => state.auth);
 
   const locationHandler = (text) => setLocation(text.trim());
   const nameHandler = (text) => setName(text.trim());
@@ -36,8 +48,10 @@ export const CreatePostScreen = ({ navigation }) => {
   };
 
   const takePhoto = async () => {
-    const photo = await snap.takePictureAsync();
-    setPhoto(photo.uri);
+    // const photo = await snap.takePictureAsync();
+    // setPhoto(photo.uri);
+    const { uri } = await snap.takePictureAsync();
+    setPhoto(uri);
   };
 
   useEffect(() => {
@@ -47,6 +61,18 @@ export const CreatePostScreen = ({ navigation }) => {
         setErrorMsg("Permission to access location was denied");
         return;
       }
+
+      let photoLocation = await Location.getCurrentPositionAsync({});
+      console.log("photoLocation", photoLocation);
+      let coords = {
+        latitude: photoLocation.coords.latitude,
+        longitude: photoLocation.coords.longitude,
+      };
+      let address = await Location.reverseGeocodeAsync(coords);
+      console.log("address", address);
+      let city = address[0].city;
+      setCoords(coords);
+      setCity(city);
     })();
   }, []);
 
@@ -59,27 +85,65 @@ export const CreatePostScreen = ({ navigation }) => {
 
   const onSend = async () => {
     console.log("navigation", navigation.navigate);
+    uploadPhotoToServer();
 
-    let geolocation = await Location.getCurrentPositionAsync();
-    // let coords = {
-    //   latitude: location.coords.latitude,
-    //   longitude: location.coords.longitude,
-    // };
+    uploadPostToServer();
 
-    navigation.navigate("DefaultScreen", {
-      photo,
-      name,
-      geolocation,
-      location,
-    });
+    navigation.navigate("DefaultScreen");
 
     Keyboard.dismiss();
+    onDelete();
   };
 
   const onDelete = () => {
     setName("");
     setLocation(null);
     setPhoto(null);
+    setCity(null);
+  };
+
+  // uploading to firebase
+  const uploadPhotoToServer = async () => {
+    const postId = Date.now().toString();
+    const path = `images/${postId}.jpeg`;
+    const storageRef = ref(storage, path);
+
+    const response = await fetch(photo);
+    const file = await response.blob();
+
+    const uploadPhoto = await uploadBytes(storageRef, file).then(() => {
+      console.log("Uploaded a blob or file!");
+    });
+
+    const processedPhoto = await getDownloadURL(storageRef)
+      .then((downloadURL) => {
+        return downloadURL;
+      })
+      .catch((error) => {
+        console.log(error);
+        throw error;
+      });
+
+    return processedPhoto;
+  };
+
+  const uploadPostToServer = async () => {
+    const photo = await uploadPhotoToServer();
+
+    try {
+      const setUserPost = await addDoc(collection(firestore, "posts"), {
+        userId,
+        login,
+        photo,
+        name,
+        location,
+        coords,
+        city,
+      });
+      console.log("post is loaded");
+    } catch (error) {
+      console.error("Error while adding doc: ", error);
+    }
   };
 
   return (
@@ -233,7 +297,7 @@ const styles = StyleSheet.create({
 
   backBtn: {
     position: "absolute",
-    top: 55,
+    top: 45,
     left: 16,
   },
   camera: {

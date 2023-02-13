@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+  FlatList,
   Dimensions,
   Image,
   ImageBackground,
@@ -10,20 +11,24 @@ import {
   View,
 } from "react-native";
 
+import { useDispatch, useSelector } from "react-redux";
+
+import { firestore } from "../../firebase/config";
+import { collection, onSnapshot, where, query } from "firebase/firestore";
+
+import { signOutUser } from "../../redux/auth/authOperations";
+
 import Delete from "../../assets/images/delete.svg";
 import LogOutIcon from "../../assets/images/logOut.svg";
 
 import Shape from "../../assets/images/Shape.svg";
 import ThumbsUp from "../../assets/images/thumbUp.svg";
-import Location from "../../assets/images/mapPin.svg";
+import MapPinIcon from "../../assets/images/mapPin.svg";
 
-const ProfileScreen = () => {
-  // const [isShowKeyboard, setIsShowKeyboard] = useState(false);
-
-  // const keyboardHide = () => {
-  //   setIsShowKeyboard(false);
-  //   Keyboard.dismiss();
-  // };
+const ProfileScreen = ({ navigation }) => {
+  const dispatch = useDispatch();
+  const [userPosts, setUserPosts] = useState([]);
+  const { userId, login } = useSelector((state) => state.auth);
 
   const [windowWidth, setWindowWidth] = useState(
     Dimensions.get("window").width
@@ -33,7 +38,24 @@ const ProfileScreen = () => {
     Dimensions.get("window").height
   );
 
+  const getUserPosts = async () => {
+    try {
+      onSnapshot(
+        query(collection(firestore, "posts"), where("userId", "==", userId)),
+        (docSnap) => {
+          console.log("docSnap.docs", docSnap.docs);
+          setUserPosts(
+            docSnap.docs.map((doc) => ({ ...doc.data(), id: doc.id }))
+          );
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
+    getUserPosts();
     const onChange = () => {
       const width = Dimensions.get("window").width;
       setWindowWidth(width);
@@ -45,89 +67,110 @@ const ProfileScreen = () => {
     return () => dimensionsHandler?.remove();
   }, []);
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ImageBackground
-          style={{
-            ...styles.imageBGPicture,
-            width: windowWidth,
-            height: windowHeight,
-          }}
-          source={require("../../assets/images/Photo-BG.jpg")}
-        >
-          <View style={styles.wrapper}>
-            <View style={styles.image_thumb}>
-              <Delete style={styles.delBtn} width={25} height={25} />
-            </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              style={styles.logOutBtn}
-            >
-              <LogOutIcon width={24} height={24} />
-            </TouchableOpacity>
-            <Text style={{ ...styles.title, fontFamily: "RobotoMedium" }}>
-              User Name
-            </Text>
+  const signOut = () => {
+    dispatch(signOutUser());
+  };
 
-            <View style={styles.cardInfo}>
-              <Image
-                source={require("../../assets/images/Forest.jpg")}
-                style={{ height: 240, borderRadius: 8 }}
-              />
-              <View>
-                <Text
-                  style={{
-                    ...styles.locationName,
-                    fontFamily: "RobotoRegular",
-                  }}
-                >
-                  Forest
-                </Text>
-                <View
-                  style={{ ...styles.infoSection, width: windowWidth - 32 }}
-                >
-                  <View style={{ flexDirection: "row", marginRight: 27 }}>
+  return (
+    <View style={{ flex: 1 }}>
+      <ImageBackground
+        style={{
+          ...styles.imageBGPicture,
+          width: windowWidth,
+          height: windowHeight,
+        }}
+        source={require("../../assets/images/Photo-BG.jpg")}
+      >
+        <View style={styles.wrapper}>
+          <View style={styles.image_thumb}>
+            <Delete style={styles.delBtn} width={25} height={25} />
+          </View>
+          <TouchableOpacity onPress={signOut} style={styles.logOutBtn}>
+            <LogOutIcon width={24} height={24} />
+          </TouchableOpacity>
+          <Text style={{ ...styles.title, fontFamily: "RobotoMedium" }}>
+            {login}
+          </Text>
+
+          <View style={styles.cardInfo}>
+            <ScrollView horizontal={true}>
+              <FlatList
+                data={userPosts}
+                keyExtractor={(item, indx) => indx.toString()}
+                renderItem={({ item }) => (
+                  <View style={{ paddingVertical: 16 }}>
+                    <Image
+                      style={{
+                        width: windowWidth - 16 * 2,
+                        height: 240,
+                        borderRadius: 8,
+                      }}
+                      source={{ uri: item.photo }}
+                    />
+                    <Text>{item.name}</Text>
                     <View
                       style={{
                         flexDirection: "row",
-                        alignItems: "center",
-                        marginRight: 15,
+                        justifyContent: "space-between",
                       }}
                     >
-                      <TouchableOpacity>
-                        <Shape width={24} height={24} />
-                      </TouchableOpacity>
+                      <View style={{ flexDirection: "row", marginTop: 8 }}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate("Comments", {
+                              photo: item.photo,
+                              postId: item.id,
+                            })
+                          }
+                        >
+                          <Shape />
+                        </TouchableOpacity>
 
-                      <Text style={{ alignSelf: "center", marginLeft: 3 }}>
-                        8
-                      </Text>
-                    </View>
-
-                    <View style={{ flexDirection: "row" }}>
-                      <TouchableOpacity>
-                        <ThumbsUp width={24} height={24} />
-                      </TouchableOpacity>
-                      <Text style={{ alignSelf: "center", marginLeft: 3 }}>
-                        153
-                      </Text>
+                        <Text> </Text>
+                        <ThumbsUp />
+                        <Text> </Text>
+                      </View>
+                      <View style={{ flexDirection: "row", marginTop: 8 }}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate("Map", {
+                              coords: item.coords,
+                            })
+                          }
+                        >
+                          <MapPinIcon />
+                        </TouchableOpacity>
+                        <Text>City: {item.city}</Text>
+                      </View>
                     </View>
                   </View>
-                  <View
-                    style={{ flexDirection: "row", justifyContent: "center" }}
-                  >
-                    <Location width={24} height={24} />
-                    <Text style={{ alignSelf: "center", marginLeft: 8 }}>
-                      Location
-                    </Text>
-                  </View>
+                )}
+              />
+            </ScrollView>
+            <View>
+              <Text
+                style={{
+                  ...styles.locationName,
+                  fontFamily: "RobotoRegular",
+                }}
+              >
+                Forest
+              </Text>
+              <View style={{ ...styles.infoSection, width: windowWidth - 32 }}>
+                <View
+                  style={{ flexDirection: "row", justifyContent: "center" }}
+                >
+                  <MapPinIcon width={24} height={24} />
+                  <Text style={{ alignSelf: "center", marginLeft: 8 }}>
+                    Location
+                  </Text>
                 </View>
               </View>
             </View>
           </View>
-        </ImageBackground>
-      </View>
-    </ScrollView>
+        </View>
+      </ImageBackground>
+    </View>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
+  Alert,
   Dimensions,
   StyleSheet,
   ScrollView,
@@ -9,9 +10,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Keyboard,
   TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
+
+import { authSignInUser } from "../../redux/auth/authOperations";
+
+import { useDispatch } from "react-redux";
 
 const initialState = {
   email: "",
@@ -20,9 +25,9 @@ const initialState = {
 
 export default function Login({ navigation }) {
   // console.log("navigation", navigation);
-
-  const [isShowKeyboard, setIsShowKeyboard] = useState(false);
   const [state, setState] = useState(initialState);
+  const dispatch = useDispatch();
+  const [isShowKeyboard, setIsShowKeyboard] = useState(false);
 
   const [borderEmailColor, setBorderEmailColor] = useState("#E8E8E8");
   const [borderPasswordColor, setBorderPasswordColor] = useState("#E8E8E8");
@@ -41,10 +46,18 @@ export default function Login({ navigation }) {
   });
 
   const keyboardHide = () => {
-    setIsShowKeyboard(false);
     Keyboard.dismiss();
-    console.log("state", state);
+    setIsShowKeyboard(false);
+  };
+
+  const handleSubmit = () => {
+    if (!state.email.trim() || !state.password.trim()) {
+      Alert.alert("Please fill in all empty fields!");
+      return;
+    }
+
     setState(initialState);
+    dispatch(authSignInUser(state));
   };
 
   return (
@@ -73,6 +86,7 @@ export default function Login({ navigation }) {
 
               <TextInput
                 value={state.email}
+                type="email"
                 style={{
                   ...styles.input,
                   marginBottom: 16,
@@ -97,6 +111,7 @@ export default function Login({ navigation }) {
 
               <TextInput
                 value={state.password}
+                type="password"
                 style={{
                   ...styles.input,
                   marginBottom: 43,
@@ -122,7 +137,7 @@ export default function Login({ navigation }) {
               <TouchableOpacity
                 activeOpacity={0.8}
                 style={styles.btn}
-                onPress={keyboardHide}
+                onPress={handleSubmit}
               >
                 <Text
                   style={{ ...styles.btnTitle, fontFamily: "RobotoRegular" }}

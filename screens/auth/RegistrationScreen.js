@@ -13,6 +13,8 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import AddIcon from "../../assets/images/add.svg";
+import { authSignUpUser } from "../../redux/auth/authOperations";
+import { useDispatch } from "react-redux";
 
 const initialState = {
   login: "",
@@ -35,6 +37,8 @@ export default function Registration({ navigation }) {
   const windowWidth = Dimensions.get("window").width - 16 * 2;
   const [dimensions, setDimensions] = useState({ windowWidth });
 
+  const dispatch = useDispatch();
+
   useEffect(() => {
     const subscription = Dimensions.addEventListener("change", ({ window }) => {
       setDimensions({ windowWidth: window.width - 16 * 2 });
@@ -45,8 +49,23 @@ export default function Registration({ navigation }) {
   const keyboardHide = () => {
     setIsShowKeyboard(false);
     Keyboard.dismiss();
-    console.log("state", state);
-    setState(initialState);
+  };
+
+  const onSubmit = async () => {
+    try {
+      const newState = {
+        login: state.login,
+        email: state.email,
+        password: state.password,
+      };
+      console.log(`newState`, newState);
+      dispatch(authSignUpUser(newState));
+      console.log("state", state);
+      setState(initialState);
+    } catch (error) {
+      console.log("error.message", error.message);
+      console.log("error.code", error.code);
+    }
   };
 
   return (
@@ -79,6 +98,7 @@ export default function Registration({ navigation }) {
 
               <TextInput
                 value={state.login}
+                type="text"
                 style={{
                   ...styles.input,
                   marginBottom: 16,
@@ -103,6 +123,7 @@ export default function Registration({ navigation }) {
 
               <TextInput
                 value={state.email}
+                type="email"
                 style={{
                   ...styles.input,
                   marginBottom: 16,
@@ -127,6 +148,7 @@ export default function Registration({ navigation }) {
 
               <TextInput
                 value={state.password}
+                type="password"
                 style={{
                   ...styles.input,
                   marginBottom: 43,
@@ -152,7 +174,7 @@ export default function Registration({ navigation }) {
               <TouchableOpacity
                 activeOpacity={0.8}
                 style={styles.btn}
-                onPress={keyboardHide}
+                onPress={onSubmit}
               >
                 <Text
                   style={{ ...styles.btnTitle, fontFamily: "RobotoRegular" }}

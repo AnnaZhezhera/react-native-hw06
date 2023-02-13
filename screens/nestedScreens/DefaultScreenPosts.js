@@ -10,17 +10,42 @@ import {
   View,
 } from "react-native";
 
+import { firestore } from "../../firebase/config";
+import { collection, onSnapshot } from "firebase/firestore";
+
+import { useDispatch, useSelector } from "react-redux";
+
+import { signOutUser } from "../../redux/auth/authOperations";
+
 import LogOutIcon from "../../assets/images/logOut.svg";
 import ShapeCommentsIcon from "../../assets/images/Shape.svg";
 import MapPinIcon from "../../assets/images/mapPin.svg";
 
 const DefaultScreenPosts = ({ route, navigation }) => {
   const [posts, setPosts] = useState([]);
-  // console.log("route.params", route.params);
+  const { login, email } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+
+  const getAllPosts = async () => {
+    const firestoreRef = collection(firestore, "posts");
+    onSnapshot(firestoreRef, (querySnapshot) => {
+      const posts = [];
+      querySnapshot.forEach((doc) => posts.push({ ...doc.data(), id: doc.id }));
+      setPosts(posts);
+    });
+  };
+
+  useEffect(() => {
+    getAllPosts();
+  }, []);
 
   useEffect(() => {
     if (route.params) setPosts((prevState) => [...prevState, route.params]);
   }, [route.params]);
+
+  const signOut = () => {
+    dispatch(signOutUser());
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
@@ -50,7 +75,10 @@ const DefaultScreenPosts = ({ route, navigation }) => {
             <View style={{ flexDirection: "row" }}>
               <TouchableOpacity
                 onPress={() => {
-                  navigation.navigate("Comments");
+                  navigation.navigate("Comments", {
+                    photo: item.photo,
+                    postId: item.id,
+                  });
                 }}
               >
                 <ShapeCommentsIcon width={24} height={24} />
@@ -62,7 +90,7 @@ const DefaultScreenPosts = ({ route, navigation }) => {
           <View style={{ flexDirection: "row" }}>
             <TouchableOpacity
               onPress={() => {
-                navigation.navigate("Map");
+                navigation.navigate("Map", { coords: item.coords });
               }}
             >
               <MapPinIcon width={24} height={24} />
@@ -73,9 +101,7 @@ const DefaultScreenPosts = ({ route, navigation }) => {
                 flexDirection: "column",
               }}
             >
-              <Text>{item.geolocation.coords?.latitude}</Text>
-              <Text>{item.geolocation.coords?.longitude}</Text>
-              <Text>{item.location}</Text>
+              <Text>City: {item.city}</Text>
             </View>
           </View>
         </View>
@@ -92,10 +118,7 @@ const DefaultScreenPosts = ({ route, navigation }) => {
         <Text style={{ ...styles.title, fontFamily: "RobotoMedium" }}>
           Posts
         </Text>
-        <TouchableOpacity
-          style={styles.logOutBtn}
-          onPress={() => navigation.navigate("Login")}
-        >
+        <TouchableOpacity style={styles.logOutBtn} onPress={signOut}>
           <LogOutIcon width={24} height={24} />
         </TouchableOpacity>
       </View>
@@ -106,8 +129,8 @@ const DefaultScreenPosts = ({ route, navigation }) => {
           source={require("../../assets/images/User.jpg")}
         />
         <View>
-          <Text style={{ fontFamily: "RobotoMedium" }}>Natali Romanova</Text>
-          <Text style={{ fontFamily: "RobotoRegular" }}>email@example.com</Text>
+          <Text style={{ fontFamily: "RobotoMedium" }}>{login}</Text>
+          <Text style={{ fontFamily: "RobotoRegular" }}>{email}</Text>
         </View>
       </View>
       <View>

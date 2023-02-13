@@ -11,6 +11,10 @@ import CreatePostScreen from "./screens/main/CreatePostScreen";
 import ProfileScreen from "./screens/main/ProfileScreen";
 import PostsScreen from "./screens/main/PostsScreen";
 
+import { Provider, useSelector, useDispatch } from "react-redux";
+import { store } from "./redux/store";
+import { authStateChangeUser } from "./redux/auth/authOperations";
+
 import GridIcon from "./assets/images/grid.svg";
 import NewPostIcon from "./assets/images/new.svg";
 import UserIcon from "./assets/images/user.svg";
@@ -83,14 +87,10 @@ const useRoute = (isAuth) => {
 };
 
 export default function App() {
-  const routing = useRoute(true);
-
   const [fontsLoaded] = useFonts({
     RobotoMedium: require("./assets/fonts/Roboto-Medium.ttf"),
     RobotoRegular: require("./assets/fonts/Roboto-Regular.ttf"),
   });
-
-  console.log("render", fontsLoaded);
 
   //adding fonts
 
@@ -108,10 +108,25 @@ export default function App() {
   //   end
 
   return (
-    <View style={styles.container} onLayout={onLayoutRootView}>
-      <NavigationContainer>{routing}</NavigationContainer>
-    </View>
+    <Provider store={store}>
+      <View style={styles.container} onLayout={onLayoutRootView}>
+        <Main />
+      </View>
+    </Provider>
   );
+}
+
+function Main() {
+  const stateChange = useSelector((state) => state.auth.stateChange);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(authStateChangeUser());
+  }, []);
+
+  const routing = useRoute(stateChange);
+
+  return <NavigationContainer>{routing}</NavigationContainer>;
 }
 
 const styles = StyleSheet.create({
