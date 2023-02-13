@@ -16,8 +16,6 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 
-import { nanoid } from "nanoid";
-
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc } from "firebase/firestore";
 import { firestore } from "../../firebase/config";
@@ -34,6 +32,7 @@ export const CreatePostScreen = ({ navigation }) => {
   const [name, setName] = useState("");
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
 
+  const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const [snap, setSnap] = useState(null);
   const [photo, setPhoto] = useState(null);
 
@@ -50,8 +49,8 @@ export const CreatePostScreen = ({ navigation }) => {
   const takePhoto = async () => {
     // const photo = await snap.takePictureAsync();
     // setPhoto(photo.uri);'
-    const options = { quality: 0.1 };
-    const { uri } = await snap.takePictureAsync(options);
+    // const options = { quality: 0.1 };
+    const { uri } = await snap.takePictureAsync();
 
     let photoLocation = await Location.getCurrentPositionAsync({});
     // console.log("photoLocation", photoLocation);
@@ -74,6 +73,10 @@ export const CreatePostScreen = ({ navigation }) => {
       if (status !== "granted") {
         setErrorMsg("Permission to access location was denied");
         return;
+      }
+      const { cameraStatus } = await Camera.requestCameraPermissionsAsync();
+      if (cameraStatus === "granted") {
+        setHasCameraPermission(true);
       }
     })();
   }, []);
